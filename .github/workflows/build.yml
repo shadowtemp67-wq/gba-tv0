@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,17 +19,22 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
-
-      - name: Setup Android
-        uses: android-actions/setup-android@v3
+          java-version: '17'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.9
+          gradle-version: '8.9'
 
-      - name: Fetch emulator core
+      - name: Setup Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
+
+      - name: Download mGBA cores
         run: bash app/cores/fetch-cores.sh
 
       - name: Build APK
@@ -37,3 +45,4 @@ jobs:
         with:
           name: GBA-TV-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
