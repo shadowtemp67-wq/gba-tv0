@@ -40,11 +40,16 @@ class GameActivity : ComponentActivity() {
             systemDirectory = filesDir.absolutePath
             savesDirectory = File(filesDir, "saves").apply { mkdirs() }.absolutePath
             shader = ShaderConfig.Sharp
-            if (stateFile.exists()) stateBytes = stateFile.readBytes()   // resume where you left off
         }
         retro = GLRetroView(this, data)
         lifecycle.addObserver(retro)
         setContentView(retro)
+
+        // Resume where you left off: load the auto-saved state once the emulator is running.
+        if (stateFile.exists()) {
+            val bytes = stateFile.readBytes()
+            retro.postDelayed({ try { retro.unserializeState(bytes) } catch (_: Exception) {} }, 1500)
+        }
     }
 
     private fun save() = try { stateFile.writeBytes(retro.serializeState()) } catch (_: Exception) {}
